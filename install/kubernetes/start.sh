@@ -4,7 +4,17 @@ if [ $# -eq 0 ]; then
   echo "错误：请提供 内网ip地址 作为参数"
   exit 1
 fi
+
+echo "init_node.sh 初始化主机环境 ..."
 bash init_node.sh
+
+
+# 拉取镜像
+echo "pull_images_mini.sh 拉取 容器镜像 ..."
+#bash pull_images_mini.sh
+bash pull_images_mini_cri.sh
+
+echo "kubeconfig & kubectl 安装命令行工具 ..."
 mkdir -p ~/.kube && rm -rf ~/.kube/config && cp config ~/.kube/config
 mkdir -p kubeconfig && echo "" > kubeconfig/dev-kubeconfig
 
@@ -23,25 +33,34 @@ node=`kubectl  get node -o wide |grep $1 |awk '{print $1}'| head -n 1`
 kubectl label node $node train=true cpu=true notebook=true service=true org=public istio=true kubeflow=true kubeflow-dashboard=true mysql=true redis=true monitoring=true logging=true --overwrite
 
 # 创建命名空间
+echo "create_ns_secret.sh 创建命名空间 ..."
 sh create_ns_secret.sh
+
 kubectl apply -f sa-rbac.yaml
+
 # 部署dashboard
+echo "deploy_dashboard 部署 dashboard ..."
 #kubectl apply -f dashboard/v2.2.0-cluster.yaml
 # 高版本k8s部署2.6.1版本
 # kubectl delete -f dashboard/v2.6.1-cluster.yaml
 # kubectl delete -f dashboard/v2.6.1-user.yaml
 kubectl apply -f dashboard/v2.6.1-cluster.yaml
 kubectl apply -f dashboard/v2.6.1-user.yaml
+
 # 部署mysql
+echo "deploy_mysql 部署 mysql ..."
 kubectl create -f mysql/pv-pvc-hostpath.yaml
 kubectl create -f mysql/service.yaml
 kubectl create -f mysql/configmap-mysql.yaml
 kubectl create -f mysql/deploy.yaml
+
 # 部署redis
+echo "deploy_redis 部署 redis ..."
 kubectl delete -f redis/redis.yaml
 kubectl create -f redis/redis.yaml
 
 # 部署prometheus
+echo "deploy_prometheus 部署 prometheus ..."
 cd prometheus
 kubectl delete -f ./operator/operator-crd.yml
 sleep 5
@@ -78,7 +97,9 @@ sleep 5
 kubectl apply -f ./prometheus/pv-pvc-hostpath.yaml
 kubectl apply -f ./prometheus/prometheus-main.yml
 sleep 5
+
 # 部署sm
+echo "deploy_servicemonitor 部署 Service Monitor ..."
 kubectl apply -f ./servicemonitor/coredns-sm.yml
 kubectl apply -f ./servicemonitor/kube-apiserver-sm.yml
 kubectl apply -f ./servicemonitor/kube-controller-manager-sm.yml
@@ -92,15 +113,18 @@ cd ../
 
 
 # 部署gpu的监控
+echo "deploy_gpu 部署 GPU ..."
 kubectl apply -f gpu/nvidia-device-plugin.yml
 kubectl apply -f gpu/dcgm-exporter.yaml
 
 # 部署volcano
+echo "deploy_volcano 部署 Volcano ..."
 kubectl delete -f volcano/volcano-development.yaml
 kubectl apply -f volcano/volcano-development.yaml
 kubectl wait crd/jobs.batch.volcano.sh --for condition=established --timeout=60s
 
 # 部署istio
+echo "deploy_istio 部署 Istio ..."
 kubectl delete -f istio/install-1.15.0.yaml
 kubectl apply -f istio/install-crd.yaml
 kubectl wait crd/envoyfilters.networking.istio.io --for condition=established --timeout=60s
@@ -113,17 +137,21 @@ kubectl apply -f gateway.yaml
 kubectl apply -f virtual.yaml
 
 # 部署argo
+echo "deploy_argo 部署 Argo ..."
 kubectl apply -f argo/minio-pv-pvc-hostpath.yaml
 kubectl apply -f argo/pipeline-runner-rolebinding.yaml
 kubectl apply -f argo/install-3.4.3-all.yaml
 
-# 部署trainjob:tfjob/pytorchjob/mpijob/mxnetjob/xgboostjobs/paddlepaddle
+# 部署kubeflow
+echo "deploy_kubeflow 部署 Kubeflow ..."
+# trainjob:tfjob/pytorchjob/mpijob/mxnetjob/xgboostjobs/paddlepaddle
 kubectl apply -f kubeflow/sa-rbac.yaml
 
 kubectl apply -k kubeflow/train-operator/manifests/overlays/standalone
 
 
 # 部署管理平台
+echo "deploy_cube_studio 配置 Cube Studio ..."
 kubectl delete configmap kubernetes-config -n infra
 kubectl create configmap kubernetes-config --from-file=kubeconfig -n infra
 
