@@ -824,7 +824,7 @@ INFERNENCE_IMAGES={
     'triton-server':['ccr.ccs.tencentyun.com/cube-studio/tritonserver:24.01-py3','ccr.ccs.tencentyun.com/cube-studio/tritonserver:23.12-py3','ccr.ccs.tencentyun.com/cube-studio/tritonserver:22.12-py3','ccr.ccs.tencentyun.com/cube-studio/tritonserver:21.12-py3','ccr.ccs.tencentyun.com/cube-studio/tritonserver:20.12-py3']
 }
 
-CONTAINER_CLI='nerdctl'   # 或者 docker nerdctl
+CONTAINER_CLI='docker'   # 或者 docker nerdctl
 
 DOCKER_IMAGES='docker:23.0.4'
 NERDCTL_IMAGES='ccr.ccs.tencentyun.com/cube-studio/nerdctl:1.7.2'

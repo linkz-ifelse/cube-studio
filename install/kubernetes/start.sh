@@ -11,8 +11,8 @@ bash init_node.sh
 
 # 拉取镜像
 echo "pull_images_mini.sh 拉取 容器镜像 ..."
-#bash pull_images_mini.sh
-bash pull_images_mini_cri.sh
+bash pull_images_mini.sh
+# bash pull_images_mini_cri.sh
 
 echo "kubeconfig & kubectl 安装命令行工具 ..."
 mkdir -p ~/.kube && rm -rf ~/.kube/config && cp config ~/.kube/config
