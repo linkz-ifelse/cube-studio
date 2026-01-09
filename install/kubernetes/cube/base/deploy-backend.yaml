@@ -45,6 +45,10 @@ spec:
         - name: infra-kubeflow
           persistentVolumeClaim:
             claimName: infra-kubeflow
+        - name: myapp-local
+          hostPath:
+            path: /root/cube/cube-studio/myapp
+            type: Directory
 
       serviceAccountName: kubeflow-dashboard
 
@@ -101,6 +105,8 @@ spec:
               mountPath: /data/k8s/kubeflow/
             - name: kubernetes-config
               mountPath: /home/myapp/kubeconfig
+            - name: myapp-local
+              mountPath: /home/myapp/myapp
           ports:
             - name: http
               containerPort: 80
@@ -147,9 +153,4 @@ spec:
       protocol: TCP
   selector:
     app: kubeflow-dashboard
-
-
-
-
-
-
+    
