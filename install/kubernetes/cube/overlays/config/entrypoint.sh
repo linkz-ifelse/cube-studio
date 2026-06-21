@@ -2,9 +2,25 @@
 
 set -ex
 
+# 检查是否存在 /updates 目录，如果有则复制更新文件到应用目录
+if [ -d "/updates" ] && [ -d "/updates/myapp" ] && [ -n "$(ls -A /updates/myapp 2>/dev/null)" ]; then
+    echo "Found updates in /updates directory, copying to application..."
+    
+    # 确保目标目录存在
+    mkdir -p /home/myapp/myapp/
+    
+    # 复制更新的文件到目标目录，保留原有结构
+    rsync -avz --exclude='**/.git' --exclude='**/__pycache__' --exclude='**/*.pyc' /updates/myapp/ /home/myapp/myapp/
+    
+    echo "Updates copied successfully"
+else
+    echo "No updates found in /updates directory or directory is empty"
+fi
+
 rm -f /home/myapp/myapp/static/mnt
 mkdir -p /data/k8s/kubeflow/pipeline/workspace
 ln -s /data/k8s/kubeflow/pipeline/workspace /home/myapp/myapp/static/mnt
+
 rm -f /home/myapp/myapp/static/dataset
 mkdir -p /data/k8s/kubeflow/dataset
 ln -s /data/k8s/kubeflow/dataset /home/myapp/myapp/static/
@@ -14,7 +30,6 @@ ln -s /cube-studio/aihub /home/myapp/myapp/static/
 
 rm -f /home/myapp/myapp/static/global
 ln -s /data/k8s/kubeflow/global /home/myapp/myapp/static/
-
 export FLASK_APP=myapp:app
 python myapp/create_db.py
 # myapp db init    # 生成migrations文件夹，不再需要操作
@@ -41,9 +56,7 @@ elif [ "$STAGE" = "dev" ]; then
 elif [ "$STAGE" = "prod" ]; then
   export FLASK_APP=myapp:app
   python myapp/check_tables.py
-  gunicorn --bind  0.0.0.0:80 --workers 20 --worker-class=gevent --timeout 300 --limit-request-line 0 --limit-request-field_size 0 --log-level=info myapp:app
+  gunicorn --bind  0.0.0.0:80 --workers 20 --worker-class=gevent --timeout 300 --limit-request-line 0 --limit-request-field_size 0 --log-level=info --access-logfile - --error-logfile - --capture-output myapp:app
 else
     myapp --help
 fi
-
-

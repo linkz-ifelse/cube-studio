@@ -60,7 +60,7 @@
     "gitpath": "",
     "image_describe": "python3.9",
     "job_template_name": "logical",
-    "job_template_describe": "任务流量的逻辑节点(企业版)",
+    "job_template_describe": "任务流量的逻辑节点",
     "job_template_expand": {
       "index": 2,
       "rec_job_template": "自定义镜像"
@@ -145,7 +145,7 @@
           "range": "",
           "default": "当前平台",
           "placeholder": "",
-          "describe": "数据集的来源，“当前平台”为本平台“数据集”模块",
+          "describe": "数据集的来源",
           "editable": 1
         },
         "--name": {

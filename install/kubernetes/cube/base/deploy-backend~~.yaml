@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kubeflow-dashboard
-  namespace: infra
   labels:
     app: kubeflow-dashboard
 spec:
@@ -26,15 +25,13 @@ spec:
                 operator: In
                 values:
                 - "true"
-
       volumes:
         - name: tz-config
           hostPath:
             path: /usr/share/zoneinfo/Asia/Shanghai
-        - name: kubeflow-dashboard-config-9gc27ccd29
+        - name: kubeflow-dashboard-config
           configMap:
-            name: kubeflow-dashboard-config-9gc27ccd29
-            defaultMode: 420
+            name: kubeflow-dashboard-config
             items:
               - key: entrypoint.sh
                 path: entrypoint.sh
@@ -45,74 +42,62 @@ spec:
         - name: kubernetes-config
           configMap:
             name: kubernetes-config
-            defaultMode: 420
         - name: infra-kubeflow
           persistentVolumeClaim:
             claimName: infra-kubeflow
-        - name: code-updates # 用于存放代码更新的卷
-          hostPath:
-            path: /root/updates
-            type: DirectoryOrCreate
 
-      serviceAccount: kubeflow-dashboard
       serviceAccountName: kubeflow-dashboard
 
       imagePullSecrets:
         - name: hubsecret
-
       containers:
         - name: kubeflow-dashboard
-          image: ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard:2026.03.01
-          # image: ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard
-          imagePullPolicy: IfNotPresent  # IfNotPresent   Always
+          image: ccr.ccs.tencentyun.com/cube-studio/kubeflow-dashboard
+          imagePullPolicy: Always  # IfNotPresent   Always
           command: ["bash","/entrypoint.sh"]
           env:
-            - name: STAGE
-              # value: $(STAGE)
-              valueFrom:
-                configMapKeyRef:
-                  key: STAGE
-                  name: deploy-config-b6hmt7m758
+          - name: STAGE
+            value: $(STAGE)
 
-            - name: REDIS_HOST
-              valueFrom:
-                configMapKeyRef:
-                  key: REDIS_HOST
-                  name: deploy-config-b6hmt7m758
-            - name: REDIS_PORT
-              valueFrom:
-                configMapKeyRef:
-                  key: REDIS_PORT
-                  name: deploy-config-b6hmt7m758
-            - name: REDIS_PASSWORD
-              valueFrom:
-                configMapKeyRef:
-                  key: REDIS_PASSWORD
-                  name: deploy-config-b6hmt7m758
-            - name: MYSQL_SERVICE
-              valueFrom:
-                configMapKeyRef:
-                  key: MYSQL_SERVICE
-                  name: deploy-config-b6hmt7m758
-            - name: ENVIRONMENT
-              valueFrom:
-                configMapKeyRef:
-                  key: ENVIRONMENT
-                  name: deploy-config-b6hmt7m758
-            - name: K8S_HOST_IP
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: status.hostIP
-          
+          - name: REDIS_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: deploy-config
+                key: REDIS_HOST
+          - name: REDIS_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: deploy-config
+                key: REDIS_PORT
+          - name: REDIS_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: deploy-config
+                key: REDIS_PASSWORD
+          - name: MYSQL_SERVICE
+            valueFrom:
+              configMapKeyRef:
+                name: deploy-config
+                key: MYSQL_SERVICE
+          - name: ENVIRONMENT
+            valueFrom:
+              configMapKeyRef:
+                name: deploy-config
+                key: ENVIRONMENT
+          - name: K8S_HOST_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
+
           volumeMounts:
-            - name: kubeflow-dashboard-config-9gc27ccd29
+            - name: kubeflow-dashboard-config
               mountPath: /entrypoint.sh
               subPath: entrypoint.sh
-            - name: kubeflow-dashboard-config-9gc27ccd29
+            - name: kubeflow-dashboard-config
               mountPath: /home/myapp/myapp/config.py
               subPath: config.py
-            - name: kubeflow-dashboard-config-9gc27ccd29
+            - name: kubeflow-dashboard-config
               mountPath: /home/myapp/myapp/project.py
               subPath: project.py
             - name: tz-config
@@ -121,14 +106,10 @@ spec:
               mountPath: /data/k8s/kubeflow/
             - name: kubernetes-config
               mountPath: /home/myapp/kubeconfig
-            - name: code-updates # 挂载代码更新目录
-              mountPath: /updates
-          
           ports:
             - name: http
               containerPort: 80
               protocol: TCP
-
           resources:
             limits:
               cpu: 10
@@ -136,7 +117,6 @@ spec:
             requests:
               cpu: 10m
               memory: 100Mi
-
           readinessProbe:
             failureThreshold: 2
             httpGet:
@@ -155,6 +135,7 @@ spec:
             timeoutSeconds: 10
           securityContext:
             privileged: true
+
 ---
 # encoding: utf-8
 apiVersion: v1
@@ -172,5 +153,9 @@ spec:
       protocol: TCP
   selector:
     app: kubeflow-dashboard
+
+
+
+
 
 

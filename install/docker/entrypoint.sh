@@ -2,19 +2,34 @@
 
 set -ex
 
+# 检查是否存在 /updates 目录，如果有则复制更新文件到应用目录
+if [ -d "/updates" ] && [ -d "/updates/myapp" ] && [ -n "$(ls -A /updates/myapp 2>/dev/null)" ]; then
+    echo "Found updates in /updates directory, copying to application..."
+    
+    # 确保目标目录存在
+    mkdir -p /home/myapp/myapp/
+    
+    # 复制更新的文件到目标目录，保留原有结构
+    rsync -avz --exclude='**/.git' --exclude='**/__pycache__' --exclude='**/*.pyc' /updates/myapp/ /home/myapp/myapp/
+    
+    echo "Updates copied successfully"
+else
+    echo "No updates found in /updates directory or directory is empty"
+fi
+
 rm -f /home/myapp/myapp/static/mnt
 mkdir -p /data/k8s/kubeflow/pipeline/workspace
 ln -s /data/k8s/kubeflow/pipeline/workspace /home/myapp/myapp/static/mnt
-
 rm -f /home/myapp/myapp/static/dataset
 mkdir -p /data/k8s/kubeflow/dataset
-ln -s /data/k8s/kubeflow/dataset /home/myapp/myapp/static/
+ln -s /data/k8s/kubeflow/dataset /home/myapp/myapp/static/dataset
 
 rm -f /home/myapp/myapp/static/aihub
-ln -s /cube-studio/aihub /home/myapp/myapp/static/
+ln -s /cube-studio/aihub /home/myapp/myapp/static/aihub
 
 rm -f /home/myapp/myapp/static/global
-ln -s /data/k8s/kubeflow/global /home/myapp/myapp/static/
+ln -s /data/k8s/kubeflow/global /home/myapp/myapp/static/global
+
 export FLASK_APP=myapp:app
 python myapp/create_db.py
 # myapp db init    # 生成migrations文件夹，不再需要操作
@@ -45,5 +60,3 @@ elif [ "$STAGE" = "prod" ]; then
 else
     myapp --help
 fi
-
-
