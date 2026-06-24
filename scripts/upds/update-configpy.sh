@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# update-entrypoint.sh
-# 用于更新 kubeflow-dashboard 的 entrypoint.sh ConfigMap (仅更新 entrypoint.sh,其他文件保持不变)
+# update-configpy.sh
+# 用于更新 kubeflow-dashboard 的 config.py ConfigMap (仅更新 config.py,其他文件保持不变)
 
 set -e
 
@@ -11,11 +11,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NAMESPACE="infra"
 DEPLOYMENT_NAME="kubeflow-dashboard"
 SOURCE_DIR="${SCRIPT_DIR}/../../install/kubernetes/cube/overlays/config"
-SOURCE_FILE="${SOURCE_DIR}/entrypoint.sh"
+SOURCE_FILE="${SOURCE_DIR}/config.py"
 CONFIGMAP_NAME="kubeflow-dashboard-config-9gc27ccd29"
 
 echo "========================================="
-echo "Update entrypoint.sh in ConfigMap ${CONFIGMAP_NAME} ..."
+echo "Update config.py in ConfigMap ${CONFIGMAP_NAME} ..."
 
 if [ ! -f "${SOURCE_FILE}" ]; then
     echo "✗ Error: File [${SOURCE_FILE}] not found."
@@ -28,10 +28,10 @@ if ! kubectl get configmap ${CONFIGMAP_NAME} -n ${NAMESPACE} &>/dev/null; then
     exit 1
 fi
 
-echo "Updating entrypoint.sh in ConfigMap ${CONFIGMAP_NAME} ..."
+echo "Updating config.py in ConfigMap ${CONFIGMAP_NAME} ..."
 
 kubectl create configmap ${CONFIGMAP_NAME} \
-  --from-file=entrypoint.sh=${SOURCE_FILE} \
+  --from-file=config.py=${SOURCE_FILE} \
   --namespace=${NAMESPACE} \
   --dry-run=client -o yaml | \
   kubectl patch configmap ${CONFIGMAP_NAME} -n ${NAMESPACE} --type merge --patch "$(cat -)"
@@ -46,9 +46,9 @@ kubectl rollout status deployment/${DEPLOYMENT_NAME} -n ${NAMESPACE} --timeout=3
 
 
 if [ $? -eq 0 ]; then
-    echo "✓ ConfigMap ${CONFIGMAP_NAME} entrypoint.sh update done!"
+    echo "✓ ConfigMap ${CONFIGMAP_NAME} config.py update done!"
 else
-    echo "✗ ConfigMap ${CONFIGMAP_NAME} update failed or timed out!"
+    echo "✗ ConfigMap ${CONFIGMAP_NAME} config.py update failed or timed out!"
     exit 1
 fi
 

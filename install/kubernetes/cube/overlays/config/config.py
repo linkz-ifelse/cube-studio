@@ -174,7 +174,7 @@ IMG_UPLOAD_URL = "/static/file/uploads/"
 
 # CORS Options
 ENABLE_CORS = True
-CORS_OPTIONS = {"supports_credentials":True}
+CORS_OPTIONS = {"supports_credentials":False, "origins": "*"}
 
 # Chrome allows up to 6 open connections per domain at a time. When there are more
 # than 6 slices in dashboard, a lot of time fetch requests are queued up and wait for
